@@ -6,7 +6,7 @@ import connectDB from "./config/database.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 
 dotenv.config();
-
+console.log("GEMINI KEY:", process.env.GEMINI_API_KEY)
 connectDB();
 
 
@@ -27,7 +27,6 @@ message:"AI Code Reviewer Running 🚀"
 });
 
 });
-
 
 app.listen(
 process.env.PORT,

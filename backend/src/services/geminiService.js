@@ -1,65 +1,63 @@
-import {GoogleGenerativeAI}
-from "@google/generative-ai";
+export const reviewCode = async (code, language) => {
 
-
-const genAI =
-new GoogleGenerativeAI(
-process.env.GEMINI_API_KEY
-);
-
-
-
-const model =
-genAI.getGenerativeModel({
-model:"gemini-1.5-flash"
-});
-
-
-
-export const reviewCode =
-async(code,language)=>{
-
-
-const prompt = `
-
+  const response = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-goog-api-key": process.env.GEMINI_API_KEY
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: `
 You are an expert code reviewer.
 
-Analyze this ${language} code.
+Return ONLY valid JSON. No markdown. No explanation.
 
-Return ONLY JSON.
-
-Format:
-
+Schema:
 {
-"bugs":[],
-"improvements":[],
-"badPractices":[],
-"namingSuggestions":[],
-"explanation":"",
-"timeComplexity":"",
-"spaceComplexity":"",
-"score":0
+"bugs": [],
+"improvements": [],
+"badPractices": [],
+"namingSuggestions": [],
+"explanation": "",
+"timeComplexity": "",
+"spaceComplexity": "",
+"score": 0
 }
-
 
 Code:
-
 ${code}
+                `
+              }
+            ]
+          }
+        ]
+      })
+    }
+  );
 
-`;
+  const data = await response.json();
 
+  console.log("RAW GEMINI RESPONSE:", JSON.stringify(data, null, 2));
 
+  if (!data.candidates?.[0]) {
+    throw new Error(JSON.stringify(data));
+  }
 
-const response =
-await model.generateContent(prompt);
+  let text = data.candidates[0].content.parts[0].text;
 
+  // 🔥 REMOVE markdown if Gemini adds ```json
+  text = text.replace(/```json/g, "").replace(/```/g, "").trim();
 
-
-const text =
-response.response.text();
-
-
-return JSON.parse(text);
-
-
-}
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    console.log("FAILED TO PARSE:", text);
+    throw new Error("Gemini returned invalid JSON");
+  }
+};

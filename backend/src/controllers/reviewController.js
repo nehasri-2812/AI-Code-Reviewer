@@ -11,40 +11,33 @@ async(req,res)=>{
 try{
 
 
-const {
-code,
-language
-}=req.body;
+    const {
+    code,
+    language
+    }=req.body;
 
 
 
-const result =
-await reviewCode(
-code,
-language
-);
+    const result =
+    await reviewCode(
+                code,
+                language
+    );
 
 
 
-const review =
-await Review.create({
+    const review = await Review.create({
+                    user:req.user._id,
+                    code,
+                    language,
+                    result,
+                    score:result.score
 
-user:req.user._id,
-
-code,
-
-language,
-
-result,
-
-score:
-result.score
-
-});
+    });
 
 
 
-res.json(review);
+    res.json(review);
 
 
 }
